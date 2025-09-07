@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlockDAG Odyssey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background-color: #0d0c1d;
+        }
+        .cinematic-bg {
+            background: radial-gradient(circle, rgba(20, 20, 40, 0.8) 0%, rgba(13, 12, 29, 1) 70%);
+        }
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .cinematic-text p.animate-fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+        }
+        .cinematic-text h1.animate-fade-in-up {
+            animation: fadeInUp 1s ease-out 1s forwards;
+        }
+        .cinematic-text p.delay-2000 {
+            animation: fadeInUp 1s ease-out 2s forwards;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1f2937;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Three.js Canvas -->
+    <div class="fixed inset-0 z-0 cinematic-bg">
+        <canvas id="bg-canvas"></canvas>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="ambient-audio" src="https://assets.mixkit.co/sfx/preview/mixkit-ambient-dreamy-synth-loop-478.mp3" loop></audio>
+    <audio id="sfx-audio" src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-confirmation-917.mp3"></audio>
+
+    <!-- Intro Screen -->
+    <div id="intro-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950 transition-opacity duration-1000">
+        <div class="cinematic-text text-center space-y-4">
+            <p class="text-xl md:text-2xl animate-fade-in-up">Welcome, explorer...</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-indigo-500 animate-fade-in-up">
+                BlockDAG Odyssey
+            </h1>
+            <p class="text-lg md:text-xl text-gray-400 delay-2000 animate-fade-in-up">The journey begins now.</p>
+        </div>
+    </div>
+
+    <!-- Main Application UI -->
+    <div id="main-ui" class="relative z-10 p-4 md:p-8 transition-opacity duration-1000 opacity-0 pointer-events-none">
+        <!-- Alert Notification -->
+        <div id="alert-notification" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 opacity-0 -translate-y-20">
+            <div class="bg-gradient-to-r from-red-500 to-purple-500 text-white rounded-full py-3 px-6 shadow-xl font-bold animate-pulse">
+                New Project: 'The Validator' has just opened its testnet!
+            </div>
+        </div>
+
+        <!-- Navigation Bar -->
+        <nav class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-full p-2 mb-8 border border-gray-700 shadow-xl flex justify-center space-x-4 flex-wrap">
+            <button onclick="setCurrentPage('dashboard')" class="py-2 px-4 md:px-6 rounded-full font-bold transition-colors duration-300 bg-indigo-500 text-white">Dashboard</button>
+            <button onclick="setCurrentPage('prediction')" class="py-2 px-4 md:px-6 rounded-full font-bold transition-colors duration-300 text-gray-400 hover:text-white hover:bg-gray-800">Prediction Hub</button>
+            <button onclick="setCurrentPage('marketplace')" class="py-2 px-4 md:px-6 rounded-full font-bold transition-colors duration-300 text-gray-400 hover:text-white hover:bg-gray-800">Marketplace</button>
+            <button onclick="setCurrentPage('staking')" class="py-2 px-4 md:px-6 rounded-full font-bold transition-colors duration-300 text-gray-400 hover:text-white hover:bg-gray-800">Staking Hub</button>
+            <button onclick="setCurrentPage('node')" class="py-2 px-4 md:px-6 rounded-full font-bold transition-colors duration-300 text-gray-400 hover:text-white hover:bg-gray-800">Node Simulator</button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Dynamic Content Section -->
+            <div class="lg:col-span-2 space-y-8">
+                <div id="dashboard-page" class="page-content">
+                    <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 md:p-10 border border-gray-700 shadow-xl">
+                        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-indigo-500">
+                            Dashboard
+                        </h1>
+                        <p class="text-gray-400 mb-8 text-lg">
+                            Explore testnets and earn your reputation.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 transition-all duration-500">
+                                <h2 class="text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                                    Wallet Status
+                                </h2>
+                                <div id="wallet-status">
+                                    <button onclick="handleConnectWallet()" class="w-full py-3 px-6 rounded-full text-lg font-bold bg-gradient-to-r from-indigo-500 to-teal-500 hover:from-indigo-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                                        Connect Wallet
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 transition-all duration-500 text-center">
+                                <h2 class="text-xl font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">Your Reputation Score</h2>
+                                <div id="reputation-score" class="text-6xl font-extrabold text-lime-400 mb-4">750</div>
+                                <p class="text-gray-400 text-sm">A higher score unlocks exclusive missions.</p>
+                            </div>
+                        </div>
+                        <div class="mt-8">
+                            <div id="task-progress">
+                                <!-- Task progress content injected here by JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 border border-gray-700 shadow-xl">
+                        <h2 class="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-500">
+                            Active Testnet Directory
+                        </h2>
+                        <div id="testnet-list" class="space-y-4">
+                            <!-- Testnet directory injected here by JS -->
+                        </div>
+                    </div>
+                    <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 border border-gray-700 shadow-xl">
+                        <h2 class="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-500">
+                            Task Automation Scripts
+                        </h2>
+                        <div id="automation-scripts" class="space-y-4">
+                            <!-- Automation scripts injected here by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="prediction-page" class="page-content hidden">
+                    <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 md:p-10 border border-gray-700 shadow-xl">
+                        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-indigo-500">
+                            Prediction Hub
+                        </h1>
+                        <p class="text-gray-400 mb-8 text-lg">
+                            View short-term price predictions for key cryptocurrencies.
+                        </p>
+                        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 mb-8">
+                            <h2 class="text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                                Smart Contract Interaction
+                            </h2>
+                            <p class="text-gray-400 mb-2">Interact with the BlockDAG prediction oracle contract.</p>
+                            <div class="space-y-2 text-sm text-gray-300 mb-4">
+                                <p><strong>Contract Address:</strong> <code class="bg-gray-700 text-gray-200 px-2 py-1 rounded-md text-xs">0x1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B</code></p>
+                                <p class="flex justify-between items-center">
+                                    <strong>Contract ABI:</strong>
+                                    <button onclick="toggleAbi()" class="text-blue-400 text-xs hover:underline">
+                                        Show ABI
+                                    </button>
+                                </p>
+                                <pre id="abi-content" class="bg-gray-700 text-gray-200 p-2 rounded-md overflow-x-auto text-xs whitespace-pre-wrap hidden"></pre>
+                            </div>
+                            <button onclick="getSmartContractPrediction()" class="w-full py-3 px-6 rounded-full text-lg font-bold bg-gradient-to-r from-indigo-500 to-teal-500 hover:from-indigo-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                                Get Smart Contract Prediction
+                            </button>
+                            <div id="contract-prediction-result" class="mt-4 p-4 rounded-xl bg-gray-700 text-green-400 font-bold text-center hidden"></div>
+                        </div>
+                        <div id="prediction-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Predictions injected here by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="marketplace-page" class="page-content hidden">
+                    <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 md:p-10 border border-gray-700 shadow-xl">
+                        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-indigo-500">
+                            Marketplace
+                        </h1>
+                        <p class="text-gray-400 mb-8 text-lg">
+                            Claim exclusive NFTs by completing testnet tasks.
+                        </p>
+                        <div id="marketplace-items" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Marketplace items injected here by JS -->
+                        </div>
+                    </div>
+                    <div id="nft-inventory" class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+                        <h2 class="text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                            Your NFT Inventory
+                        </h2>
+                        <div id="owned-nfts" class="grid grid-cols-2 gap-4">
+                            <p id="no-nfts-message" class="text-gray-400 text-center">You don't own any NFTs yet. Mint one from the Marketplace!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="staking-page" class="page-content hidden">
+                    <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 md:p-10 border border-gray-700 shadow-xl">
+                        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-indigo-500">
+                            Staking Hub
+                        </h1>
+                        <p class="text-gray-400 mb-8 text-lg">
+                            Lock your testnet tokens to earn rewards and secure the network.
+                        </p>
+                        <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 mb-8">
+                            <h2 class="text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-lime-500">Your Staking Balance</h2>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center p-4 bg-gray-700 rounded-xl">
+                                    <p class="text-sm text-gray-400">Staked Tokens</p>
+                                    <p id="staked-tokens" class="text-2xl font-bold text-lime-400">0.00</p>
+                                </div>
+                                <div class="text-center p-4 bg-gray-700 rounded-xl">
+                                    <p class="text-sm text-gray-400">Pending Rewards</p>
+                                    <p id="pending-rewards" class="text-2xl font-bold text-yellow-400">0.00</p>
+                                </div>
+                            </div>
+                            <div class="mt-6 flex space-x-4">
+                                <input type="number" id="staking-amount" placeholder="Enter amount to stake" class="flex-grow bg-gray-700 text-white rounded-l-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <button onclick="handleStake()" class="flex-shrink-0 py-2 px-6 rounded-full text-sm font-bold bg-gradient-to-r from-indigo-500 to-teal-500 hover:from-indigo-600 hover:to-teal-600 transition-all duration-300">
+                                    Stake
+                                </button>
+                                <button id="claim-rewards-btn" onclick="handleClaimRewards()" class="flex-shrink-0 py-2 px-6 rounded-full text-sm font-bold transition-all duration-300 bg-gray-600 text-gray-400 cursor-not-allowed" disabled>
+                                    Claim
+                                </button>
+                            </div>
+                        </div>
+                        <div id="staking-pools" class="space-y-4">
+                            <!-- Staking pools injected here by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="node-page" class="page-content hidden">
+                    <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 md:p-10 border border-gray-700 shadow-xl">
+                        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-indigo-500">
+                            Validator Node Simulator
+                        </h1>
+                        <p class="text-gray-400 mb-8 text-lg">
+                            Run a simulated validator node to secure the network and earn rewards.
+                        </p>
+                        <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 mb-8 text-center">
+                            <div class="flex items-center justify-center space-x-4 mb-4">
+                                <span id="node-status-indicator" class="w-4 h-4 rounded-full bg-red-500"></span>
+                                <span id="node-status-text" class="text-2xl font-bold">OFFLINE</span>
+                            </div>
+                            <button id="node-toggle-btn" onclick="handleToggleNode()" class="w-full py-3 px-6 rounded-full text-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg bg-gradient-to-r from-green-500 to-lime-600">
+                                Start Node
+                            </button>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700">
+                            <h2 class="text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-500">Node Logs</h2>
+                            <div id="node-logs" class="h-64 overflow-y-auto custom-scrollbar bg-gray-700 rounded-xl p-4 text-sm space-y-2 font-mono">
+                                <p class="text-gray-500">[Waiting for input...]</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1 space-y-8">
+                <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 border border-gray-700 shadow-xl">
+                    <h2 class="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-purple-500">
+                        Leaderboard
+                    </h2>
+                    <ul id="leaderboard-list" class="space-y-3">
+                        <!-- Leaderboard items injected here by JS -->
+                    </ul>
+                </div>
+
+                <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 border border-gray-700 shadow-xl">
+                    <h2 class="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500">
+                        AI Guide
+                    </h2>
+                    <div id="ai-chat-history" class="h-48 overflow-y-auto custom-scrollbar p-2 bg-gray-800 rounded-xl border border-gray-700 space-y-4">
+                        <!-- Chat messages injected here by JS -->
+                    </div>
+                    <form id="ai-chat-form" class="mt-4 flex">
+                        <input type="text" id="ai-query-input" placeholder="Ask Aura..." class="flex-grow bg-gray-700 text-white rounded-l-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                        <button type="submit" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 rounded-r-full shadow-lg">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 010-4m0 4a2 2 010-4m0 4v2m0-6V4m4 8h2m-6 0H4m4 0h4m4-4V6a2 2 000-2m0 2h-2m-2 0H8a2 2 000-2m0 2V6a2 2 000-2" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-gray-900 bg-opacity-70 backdrop-blur-lg rounded-3xl p-6 text-center border border-gray-700 shadow-xl">
+                    <h2 class="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-500">Community DAO</h2>
+                    <p class="text-gray-400 mb-4">Shape the future of BlockDAG Odyssey by voting on new projects.</p>
+                    <button onclick="showDaoModal()" class="w-full py-3 px-6 rounded-full text-lg font-bold bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        View Proposals
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="dao-modal" class="fixed inset-0 z-40 flex items-center justify-center bg-gray-950 bg-opacity-80 backdrop-blur-md hidden">
+        <div class="bg-gray-900 rounded-3xl p-8 max-w-lg w-full border border-gray-700 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-500">Community DAO</h2>
+                <button onclick="hideDaoModal()" class="text-gray-400 hover:text-white transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+            <p class="text-gray-400 mb-6">Vote on which new projects and testnets should be added to the Odyssey.</p>
+            <div class="space-y-4">
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
+                    <span>**Proposal:** Add "Vex Protocol" Testnet</span>
+                    <button class="py-2 px-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-sm hover:scale-105 transition-transform duration-200">
+                        Vote
+                    </button>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
+                    <span>**Proposal:** Integrate "Cosmic Swap"</span>
+                    <button class="py-2 px-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-sm hover:scale-105 transition-transform duration-200">
+                        Vote
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="mint-modal" class="fixed inset-0 z-40 flex items-center justify-center bg-gray-950 bg-opacity-80 backdrop-blur-md hidden">
+        <div class="bg-gray-900 rounded-3xl p-8 max-w-sm w-full border border-gray-700 shadow-2xl text-center">
+            <h2 class="text-3xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-500">Mint NFT</h2>
+            <p class="text-gray-400 mb-6">Are you sure you want to mint this NFT?</p>
+            <div class="flex justify-center space-x-4">
+                <button onclick="hideMintModal()" class="py-2 px-6 rounded-full font-bold bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200">
+                    Cancel
+                </button>
+                <button onclick="handleMintNFT()" class="py-2 px-6 rounded-full font-bold bg-gradient-to-r from-indigo-500 to-teal-500 text-white hover:from-indigo-600 hover:to-teal-600 transition-all duration-300">
+                    Confirm Mint
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ----------------------------------------------------
+        // Global State & Data
+        // ----------------------------------------------------
+        let currentPage = 'dashboard';
+        let currentTask = 0;
+        let isConnected = false;
+        let walletAddress = null;
+        let aiHistory = [{ role: 'aura', text: 'Welcome, Explorer. How may I assist you with your journey today?' }];
+        let stakedTokens = 0;
+        let pendingRewards = 0;
+        let nodeStatus = 'offline';
+        let nodeLog = [];
+        let mintItem = null;
+
+        const tasks = [
+            { id: 1, title: 'Connect Your Wallet', description: 'Begin your journey by linking your wallet to the BlockDAG testnet.' },
+            { id: 2, title: 'The First Transaction', description: 'Submit your first transaction to the testnet to prove your readiness.' },
+            { id: 3, title: 'Deploy a Smart Contract', description: 'Test your skills by deploying a simple contract on the BlockDAG network.' },
+        ];
+
+        const testnets = [
+            { id: 1, name: 'BlockDAG Alpha Testnet', rpc: 'https://testnet.blockdag.org/rpc', faucet: 'https://faucet.blockdag.org' },
+            { id: 2, name: 'Project Vex Testnet', rpc: 'https://testnet.vex.io/rpc', faucet: 'https://faucet.vex.io' },
+            { id: 3, name: 'Cosmic Swap Testnet', rpc: 'https://testnet.cosmic.io/rpc', faucet: 'https://faucet.cosmic.io' },
+        ];
+
+        const automationScripts = [
+            { id: 1, title: 'Claim Daily Faucet Tokens', action: 'claim-faucet' },
+            { id: 2, title: 'Simulate Testnet Swap', action: 'simulate-swap' },
+        ];
+
+        const predictions = [
+            { id: 1, crypto: 'BDAG', prediction: '$0.05', trend: 'Up', confidence: 'High' },
+            { id: 2, crypto: 'ETH', prediction: '$3,800', trend: 'Down', confidence: 'Medium' },
+            { id: 3, crypto: 'SOL', prediction: '$145', trend: 'Up', confidence: 'High' },
+            { id: 4, crypto: 'AVAX', prediction: '$35', trend: 'Down', confidence: 'Medium' },
+        ];
+
+        const marketplaceItems = [
+            { id: 1, name: 'BDAG Voyager', price: 50, image: 'https://placehold.co/150x150/5046e5/ffffff?text=Voyager' },
+            { id: 2, name: 'BlockDAG Builder', price: 75, image: 'https://placehold.co/150x150/f97316/ffffff?text=Builder' },
+            { id: 3, name: 'Cosmic Contributor', price: 100, image: 'https://placehold.co/150x150/14b8a6/ffffff?text=Cosmic' },
+        ];
+        let ownedNFTs = [];
+
+        const leaderboard = [
+            { name: 'Voyager#1', score: 980 },
+            { name: 'Zenith#2', score: 950 },
+            { name: 'CosmicDev#3', score: 875 },
+            { name: 'NovaBuilder#4', score: 820 },
+            { name: 'SolanaLover#5', score: 760 },
+            { name: 'QuantumJump#6', score: 710 },
+            { name: 'StarkLord#7', score: 685 },
+        ];
+
+        const contractAddress = '0x1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B';
+        const contractABI = [
+            { "constant": true, "inputs": [], "name": "getPrediction", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }
+        ];
+
+        const stakingPools = [
+            { id: 1, name: 'Core Validator Pool', apy: '12%', minStake: 100 },
+            { id: 2, name: 'Liquidity Provider', apy: '24%', minStake: 50 },
+        ];
+
+        // ----------------------------------------------------
+        // DOM Element References
+        // ----------------------------------------------------
+        const mainUI = document.getElementById('main-ui');
+        const introScreen = document.getElementById('intro-screen');
+        const alertNotification = document.getElementById('alert-notification');
+        const canvas = document.getElementById('bg-canvas');
+        const ambientAudio = document.getElementById('ambient-audio');
+        const sfxAudio = document.getElementById('sfx-audio');
+        const aiChatHistory = document.getElementById('ai-chat-history');
+        const aiQueryInput = document.getElementById('ai-query-input');
+        const aiChatForm = document.getElementById('ai-chat-form');
+        const walletStatusDiv = document.getElementById('wallet-status');
+        const taskProgressDiv = document.getElementById('task-progress');
+        const testnetListDiv = document.getElementById('testnet-list');
+        const automationScriptsDiv = document.getElementById('automation-scripts');
+        const leaderboardList = document.getElementById('leaderboard-list');
+        const predictionList = document.getElementById('prediction-list');
+        const marketplaceItemsDiv = document.getElementById('marketplace-items');
+        const nftInventoryDiv = document.getElementById('owned-nfts');
+        const noNftsMessage = document.getElementById('no-nfts-message');
+        const stakingPoolsDiv = document.getElementById('staking-pools');
+        const stakedTokensSpan = document.getElementById('staked-tokens');
+        const pendingRewardsSpan = document.getElementById('pending-rewards');
+        const stakingAmountInput = document.getElementById('staking-amount');
+        const claimRewardsBtn = document.getElementById('claim-rewards-btn');
+        const nodeStatusIndicator = document.getElementById('node-status-indicator');
+        const nodeStatusText = document.getElementById('node-status-text');
+        const nodeToggleBtn = document.getElementById('node-toggle-btn');
+        const nodeLogsDiv = document.getElementById('node-logs');
+        const abiContentPre = document.getElementById('abi-content');
+        const contractPredictionResultDiv = document.getElementById('contract-prediction-result');
+
+        // ----------------------------------------------------
+        // Three.js and Animation Setup
+        // ----------------------------------------------------
+        function setupThreeJS() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const geometry = new THREE.DodecahedronGeometry(1.5, 0);
+            const material = new THREE.MeshNormalMaterial({ wireframe: true });
+            const object = new THREE.Mesh(geometry, material);
+            scene.add(object);
+            camera.position.z = 5;
+
+            const animate = () => {
+                requestAnimationFrame(animate);
+                object.rotation.x += 0.005;
+                object.rotation.y += 0.005;
+                renderer.render(scene, camera);
+            };
+
+            const handleResize = () => {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                renderer.setSize(width, height);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+            };
+
+            window.addEventListener('resize', handleResize);
+            animate();
+        }
+
+        // ----------------------------------------------------
+        // API Call for AI Guide
+        // ----------------------------------------------------
+        async function getAiResponse(prompt) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: 'Act as a helpful and encouraging AI testnet guide. Use Markdown for formatting.' }]
+                },
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || 'I am unable to assist with that query at this time.';
+            } catch (error) {
+                return 'An error occurred. Please try again later.';
+            }
+        }
+
+        // ----------------------------------------------------
+        // UI Rendering Functions
+        // ----------------------------------------------------
+        function renderPage() {
+            document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
+            document.getElementById(currentPage + '-page').classList.remove('hidden');
+
+            // Update navigation bar
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('bg-indigo-500', 'text-white');
+                btn.classList.add('text-gray-400', 'hover:text-white', 'hover:bg-gray-800');
+            });
+            document.querySelector(`[onclick="setCurrentPage('${currentPage}')"]`).classList.add('bg-indigo-500', 'text-white');
+            document.querySelector(`[onclick="setCurrentPage('${currentPage}')"]`).classList.remove('text-gray-400', 'hover:text-white', 'hover:bg-gray-800');
+        }
+
+        function renderDashboard() {
+            // Render wallet status
+            if (isConnected) {
+                walletStatusDiv.innerHTML = `
+                    <div>
+                        <p class="text-lime-400 font-bold mb-2">Connected!</p>
+                        <p class="text-gray-300 break-words">Address: <span class="font-mono text-xs">${walletAddress}</span></p>
+                    </div>
+                `;
+            } else {
+                walletStatusDiv.innerHTML = `
+                    <button onclick="handleConnectWallet()" class="w-full py-3 px-6 rounded-full text-lg font-bold bg-gradient-to-r from-indigo-500 to-teal-500 hover:from-indigo-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        Connect Wallet
+                    </button>
+                `;
+            }
+
+            // Render tasks
+            if (currentTask !== -1) {
+                const task = tasks[currentTask];
+                const progress = (currentTask + 1) / tasks.length * 100;
+                taskProgressDiv.innerHTML = `
+                    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 transition-all duration-500">
+                        <h2 class="text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">${task.title}</h2>
+                        <p class="text-gray-300 mb-6">${task.description}</p>
+                        <div class="w-full h-2 rounded-full bg-gray-600 mb-4 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-lime-400 to-green-500 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+                        </div>
+                        <button onclick="handleCompleteTask()" class="w-full py-3 px-6 rounded-full text-lg font-bold bg-gradient-to-r from-indigo-500 to-teal-500 hover:from-indigo-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            Simulate Completion
+                        </button>
+                    </div>
+                `;
+            } else {
+                taskProgressDiv.innerHTML = `
+                    <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 text-center">
+                        <h2 class="text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                            Journey Completed!
+                        </h2>
+                        <p class="text-gray-300">You have completed all introductory tasks. New quests await, explorer.</p>
+                    </div>
+                `;
+            }
+
+            // Render testnet list
+            testnetListDiv.innerHTML = testnets.map(testnet => `
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <h3 class="text-lg font-bold mb-2">${testnet.name}</h3>
+                    <div class="text-sm space-y-2">
+                        <p class="flex items-center text-gray-400">
+                            <span class="w-20 font-bold">RPC:</span>
+                            <code class="bg-gray-700 text-gray-200 px-2 py-1 rounded-md text-xs">${testnet.rpc}</code>
+                        </p>
+                        <p class="flex items-center text-gray-400">
+                            <span class="w-20 font-bold">Faucet:</span>
+                            <a href="${testnet.faucet}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline transition-colors duration-200">${testnet.faucet}</a>
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render automation scripts
+            automationScriptsDiv.innerHTML = automationScripts.map(script => `
+                <button onclick="handleRunScript('${script.title}')" class="w-full text-left py-3 px-6 rounded-2xl text-lg font-bold bg-gray-800 border border-gray-700 transition-all duration-300 transform hover:scale-105 shadow-lg flex justify-between items-center">
+                    <span>${script.title}</span>
+                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-8V7a1 1 0 112 0v3h2a1 1 0 010 2h-2v2a1 1 0 11-2 0v-2H8a1 1 0 110-2h1z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            `).join('');
+        }
+
+        function renderPredictionHub() {
+            predictionList.innerHTML = predictions.map(pred => `
+                <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 flex justify-between items-center transition-all duration-300 hover:scale-105">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-1">${pred.crypto}</h3>
+                        <p class="text-xl ${pred.trend === 'Up' ? 'text-green-400' : 'text-red-400'} font-semibold">${pred.prediction}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold">Trend: <span class="${pred.trend === 'Up' ? 'text-lime-400' : 'text-red-400'}">${pred.trend}</span></p>
+                        <p class="text-sm text-gray-400">Confidence: ${pred.confidence}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMarketplace() {
+            marketplaceItemsDiv.innerHTML = marketplaceItems.map(item => `
+                <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 text-center flex flex-col justify-between items-center hover:scale-105 transition-transform duration-300">
+                    <h3 class="text-xl font-bold mb-2">${item.name}</h3>
+                    <img src="${item.image}" alt="${item.name}" class="rounded-xl w-32 h-32 mx-auto mb-4" />
+                    <p class="text-lg text-yellow-400 font-semibold mb-4">${item.price} Tokens</p>
+                    <button onclick="showMintModal(${item.id})" class="w-full py-2 px-4 rounded-full text-sm font-bold bg-gradient-to-r from-indigo-500 to-teal-500 hover:from-indigo-600 hover:to-teal-600 transition-all duration-300 transform shadow-lg">
+                        Claim NFT
+                    </button>
+                </div>
+            `).join('');
+
+            // Render NFT inventory
+            if (ownedNFTs.length > 0) {
+                noNftsMessage.classList.add('hidden');
+                nftInventoryDiv.innerHTML = ownedNFTs.map(nft => `
+                    <div class="bg-gray-700 p-3 rounded-xl text-center">
+                        <img src="${nft.image}" alt="${nft.name}" class="rounded-xl w-full mb-2" />
+                        <p class="text-sm font-semibold">${nft.name}</p>
+                    </div>
+                `).join('');
+            } else {
+                noNftsMessage.classList.remove('hidden');
+                nftInventoryDiv.innerHTML = `<p id="no-nfts-message" class="text-gray-400 text-center">You don't own any NFTs yet. Mint one from the Marketplace!</p>`;
+            }
+        }
+
+        function renderStakingHub() {
+            stakedTokensSpan.textContent = stakedTokens.toFixed(2);
+            pendingRewardsSpan.textContent = pendingRewards.toFixed(2);
+            claimRewardsBtn.disabled = pendingRewards === 0;
+            if (pendingRewards > 0) {
+                claimRewardsBtn.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+                claimRewardsBtn.classList.add('bg-gradient-to-r', 'from-lime-500', 'to-green-600', 'hover:from-lime-600', 'hover:to-green-700');
+            } else {
+                claimRewardsBtn.classList.add('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+                claimRewardsBtn.classList.remove('bg-gradient-to-r', 'from-lime-500', 'to-green-600', 'hover:from-lime-600', 'hover:to-green-700');
+            }
+
+            stakingPoolsDiv.innerHTML = stakingPools.map(pool => `
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold mb-1">${pool.name}</h3>
+                        <p class="text-gray-400 text-sm">APY: ${pool.apy} | Min Stake: ${pool.minStake} BDAG</p>
+                    </div>
+                    <button onclick="showStakingModal()" class="py-2 px-4 rounded-full text-sm font-bold bg-gray-700 hover:bg-gray-600 transition-colors duration-200">
+                        Details
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderNodeSimulator() {
+            nodeStatusIndicator.className = `w-4 h-4 rounded-full ${nodeStatus === 'online' ? 'bg-lime-500 animate-pulse' : nodeStatus === 'syncing' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`;
+            nodeStatusText.textContent = nodeStatus.toUpperCase();
+            if (nodeStatus === 'offline') {
+                nodeToggleBtn.textContent = 'Start Node';
+                nodeToggleBtn.classList.remove('bg-gradient-to-r', 'from-red-500', 'to-pink-600');
+                nodeToggleBtn.classList.add('bg-gradient-to-r', 'from-green-500', 'to-lime-600');
+            } else {
+                nodeToggleBtn.textContent = 'Stop Node';
+                nodeToggleBtn.classList.add('bg-gradient-to-r', 'from-red-500', 'to-pink-600');
+                nodeToggleBtn.classList.remove('bg-gradient-to-r', 'from-green-500', 'to-lime-600');
+            }
+            nodeLogsDiv.innerHTML = nodeLog.map(log => `<p class="text-gray-300">${log}</p>`).join('') + `<p class="text-gray-500">[Waiting for input...]</p>`;
+            nodeLogsDiv.scrollTop = nodeLogsDiv.scrollHeight;
+        }
+
+        function renderLeaderboard() {
+            leaderboardList.innerHTML = leaderboard.map((user, index) => `
+                <li class="flex justify-between items-center text-lg py-2 px-4 rounded-xl bg-gray-800 border border-gray-700 shadow-inner">
+                    <span class="font-semibold text-gray-300">${index + 1}. ${user.name}</span>
+                    <span class="text-yellow-400 font-bold">${user.score}</span>
+                </li>
+            `).join('');
+        }
+
+        function renderAiChat() {
+            aiChatHistory.innerHTML = aiHistory.map(msg => `
+                <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
+                    <div class="p-3 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-purple-600' : 'bg-gray-700'}">
+                        <p class="text-sm">${msg.text}</p>
+                    </div>
+                </div>
+            `).join('');
+            aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+        }
+
+        // ----------------------------------------------------
+        // Page and UI State Management
+        // ----------------------------------------------------
+        function setCurrentPage(page) {
+            currentPage = page;
+            renderAll();
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+        
+        function showDaoModal() { showModal('dao-modal'); }
+        function hideDaoModal() { hideModal('dao-modal'); }
+        function showMintModal(itemId) { mintItem = marketplaceItems.find(item => item.id === itemId); showModal('mint-modal'); }
+        function hideMintModal() { hideModal('mint-modal'); }
+
+        function showAlertNotification() {
+            alertNotification.classList.remove('opacity-0', '-translate-y-20');
+            alertNotification.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                alertNotification.classList.remove('opacity-100', 'translate-y-0');
+                alertNotification.classList.add('opacity-0', '-translate-y-20');
+            }, 5000);
+        }
+
+        function renderAll() {
+            renderPage();
+            renderDashboard();
+            renderPredictionHub();
+            renderMarketplace();
+            renderStakingHub();
+            renderNodeSimulator();
+            renderLeaderboard();
+            renderAiChat();
+        }
+
+        // ----------------------------------------------------
+        // User Action Handlers
+        // ----------------------------------------------------
+        async function handleConnectWallet() {
+            walletAddress = '0x' + (Math.random() * 0xFFFFFFFFFFFFFFFF).toString(16).padStart(40, '0');
+            isConnected = true;
+            sfxAudio.currentTime = 0;
+            sfxAudio.play();
+            aiHistory.push({ role: 'aura', text: "Wallet connected successfully! Your journey into the BlockDAG testnet has begun." });
+            renderAll();
+        }
+
+        function handleCompleteTask() {
+            sfxAudio.currentTime = 0;
+            sfxAudio.play();
+
+            if (currentTask < tasks.length - 1) {
+                currentTask++;
+            } else {
+                currentTask = -1;
+                showAlertNotification();
+            }
+            renderAll();
+        }
+
+        async function handleRunScript(title) {
+            const message = await getAiResponse(`Simulate running the script: "${title}". Describe the outcome for a user.`);
+            aiHistory.push({ role: 'aura', text: message });
+            renderAll();
+            showAlertNotification();
+        }
+
+        async function handleAiSubmit(e) {
+            e.preventDefault();
+            const aiQuery = aiQueryInput.value.trim();
+            if (!aiQuery) return;
+
+            aiHistory.push({ role: 'user', text: aiQuery });
+            aiHistory.push({ role: 'aura', text: '...' }); // Thinking message
+            renderAiChat();
+
+            const prompt = `Act as an AI Testnet Guide named Aura. Respond to the user's query about testnets, blockchain, or development. User query: "${aiQuery}"`;
+            const responseText = await getAiResponse(prompt);
+            aiHistory.pop(); // Remove thinking message
+            aiHistory.push({ role: 'aura', text: responseText });
+            aiQueryInput.value = '';
+            renderAll();
+        }
+
+        function toggleAbi() {
+            const isHidden = abiContentPre.classList.toggle('hidden');
+            const button = document.querySelector('#prediction-page button.text-blue-400');
+            button.textContent = isHidden ? 'Show ABI' : 'Hide ABI';
+            abiContentPre.textContent = JSON.stringify(contractABI, null, 2);
+        }
+
+        function getSmartContractPrediction() {
+            const prediction = "The next BlockDAG price prediction is: $0.06 (Strong Buy)";
+            contractPredictionResultDiv.textContent = prediction;
+            contractPredictionResultDiv.classList.remove('hidden');
+            aiHistory.push({ role: 'aura', text: "The oracle contract has provided its latest prediction. Check the module below!" });
+            renderAll();
+        }
+
+        function handleMintNFT() {
+            if (!isConnected) {
+                aiHistory.push({ role: 'aura', text: "You must connect your wallet to mint an NFT." });
+                renderAll();
+                hideMintModal();
+                return;
+            }
+            const nft = {
+                id: ownedNFTs.length + 1,
+                name: mintItem.name,
+                image: mintItem.image,
+                transactionHash: '0x' + (Math.random() * 0xFFFFFFFFFFFFFFFF).toString(16).padStart(64, '0')
+            };
+            ownedNFTs.push(nft);
+            aiHistory.push({ role: 'aura', text: `Success! You have minted the "${mintItem.name}" NFT. Check your inventory!` });
+            hideMintModal();
+            renderAll();
+        }
+
+        let rewardInterval;
+        function handleStake() {
+            const amount = parseFloat(stakingAmountInput.value);
+            if (isNaN(amount) || amount <= 0 || !isConnected) {
+                aiHistory.push({ role: 'aura', text: "Please enter a valid amount to stake and ensure your wallet is connected." });
+                renderAll();
+                return;
+            }
+            stakedTokens += amount;
+            stakingAmountInput.value = '';
+            if (rewardInterval) clearInterval(rewardInterval);
+            rewardInterval = setInterval(() => {
+                pendingRewards += stakedTokens * 0.01;
+                pendingRewardsSpan.textContent = pendingRewards.toFixed(2);
+                claimRewardsBtn.disabled = false;
+                if (pendingRewards > 0) {
+                    claimRewardsBtn.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+                    claimRewardsBtn.classList.add('bg-gradient-to-r', 'from-lime-500', 'to-green-600', 'hover:from-lime-600', 'hover:to-green-700');
+                }
+            }, 1000);
+            aiHistory.push({ role: 'aura', text: `You have successfully staked ${amount} tokens. Your rewards are now accumulating!` });
+            renderAll();
+        }
+
+        function handleClaimRewards() {
+            aiHistory.push({ role: 'aura', text: `Claiming ${pendingRewards.toFixed(2)} rewards... Success! Your rewards have been added to your balance.` });
+            pendingRewards = 0;
+            renderAll();
+        }
+
+        function handleToggleNode() {
+            if (nodeStatus === 'offline') {
+                nodeStatus = 'syncing';
+                nodeLog.push(`[${new Date().toLocaleTimeString()}] Starting node...`);
+                renderAll();
+                setTimeout(() => {
+                    nodeStatus = 'online';
+                    nodeLog.push(`[${new Date().toLocaleTimeString()}] Node synchronized. Status: ONLINE.`);
+                    renderAll();
+                }, 3000);
+            } else {
+                nodeStatus = 'offline';
+                nodeLog.push(`[${new Date().toLocaleTimeString()}] Node shutting down.`);
+                renderAll();
+            }
+        }
+
+        // ----------------------------------------------------
+        // Initialization on Window Load
+        // ----------------------------------------------------
+        window.onload = function() {
+            setTimeout(() => {
+                introScreen.style.opacity = '0';
+                introScreen.style.pointerEvents = 'none';
+                mainUI.style.opacity = '1';
+                mainUI.style.pointerEvents = 'auto';
+            }, 6000);
+            
+            // Start audio
+            ambientAudio.volume = 0.5;
+            ambientAudio.play();
+
+            // Setup Three.js
+            setupThreeJS();
+
+            // Initial render
+            renderAll();
+
+            // Event listeners
+            aiChatForm.addEventListener('submit', handleAiSubmit);
+        };
+    </script>
+</body>
+</html>
